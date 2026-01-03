@@ -14,7 +14,7 @@ struct GameView: View {
     let notation: NoteNotation
     let roundLength: RoundLength
     	
-    init(gameMode: GameMode = .practice, difficulty: Difficulty, clefSetting: ClefType, notation: NoteNotation, roundLength: RoundLength = .short, allowedNotes: Set<NoteName>? = nil, metronomeEnabled: Bool = false, metronomeSpeed: MetronomeSpeed = .moderate) {
+    init(gameMode: GameMode = .practice, difficulty: Difficulty, clefSetting: ClefType, notation: NoteNotation, roundLength: RoundLength = .short, allowedNotes: Set<NoteName>? = nil, metronomeEnabled: Bool = false, metronomeSpeed: MetronomeSpeed = .moderate, hapticEnabled: Bool = true) {
         _viewModel = StateObject(wrappedValue: GameViewModel(
             gameMode: gameMode,
             difficulty: difficulty,
@@ -22,7 +22,8 @@ struct GameView: View {
             roundLength: roundLength,
             allowedNotes: allowedNotes,
             metronomeEnabled: metronomeEnabled,
-            metronomeSpeed: metronomeSpeed
+            metronomeSpeed: metronomeSpeed,
+            hapticEnabled: hapticEnabled
         ))
         self.gameMode = gameMode
         self.notation = notation
@@ -172,7 +173,7 @@ struct GameView: View {
                 onNoteTapped: { note in
                     viewModel.checkAnswer(note)
                 },
-                disabled: viewModel.showingFeedback || viewModel.isGameOver
+                disabled: viewModel.isGameOver
             )
             .padding(.bottom, 40)
         } else {
@@ -180,7 +181,7 @@ struct GameView: View {
                 onNoteTapped: { note in
                     viewModel.checkAnswer(note)
                 },
-                disabled: viewModel.showingFeedback || viewModel.isGameOver,
+                disabled: viewModel.isGameOver,
                 notation: notation
             )
             .padding(.bottom, 40)

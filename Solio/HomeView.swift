@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var metronomeEnabled: Bool = false
     @State private var selectedMetronomeSpeed: MetronomeSpeed = .moderate
     @State private var isMuted: Bool = false
+    @State private var hapticEnabled: Bool = true
     @State private var navigateToGame = false
     @State private var showStats = false
     
@@ -236,24 +237,37 @@ struct HomeView: View {
                                 }
                             }
                             
-                            // Sound toggle
-                            SettingsCard(title: "Sound") {
-                                Toggle(isOn: Binding(
-                                    get: { !isMuted },
-                                    set: { 
-                                        isMuted = !$0
-                                        AudioManager.shared.isMuted = isMuted
+                            // Sound & Haptic toggles
+                            SettingsCard(title: "Feedback") {
+                                VStack(spacing: 12) {
+                                    Toggle(isOn: Binding(
+                                        get: { !isMuted },
+                                        set: { 
+                                            isMuted = !$0
+                                            AudioManager.shared.isMuted = isMuted
+                                        }
+                                    )) {
+                                        HStack {
+                                            Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                                .foregroundColor(isMuted ? .gray : .orange)
+                                            Text(isMuted ? "Sound Off" : "Sound On")
+                                                .font(.system(size: 16, design: .rounded))
+                                                .foregroundColor(.white.opacity(0.8))
+                                        }
                                     }
-                                )) {
-                                    HStack {
-                                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                                            .foregroundColor(isMuted ? .gray : .orange)
-                                        Text(isMuted ? "Muted" : "Sound On")
-                                            .font(.system(size: 16, design: .rounded))
-                                            .foregroundColor(.white.opacity(0.8))
+                                    .tint(.orange)
+                                    
+                                    Toggle(isOn: $hapticEnabled) {
+                                        HStack {
+                                            Image(systemName: hapticEnabled ? "iphone.radiowaves.left.and.right" : "iphone.slash")
+                                                .foregroundColor(hapticEnabled ? .orange : .gray)
+                                            Text(hapticEnabled ? "Vibration On" : "Vibration Off")
+                                                .font(.system(size: 16, design: .rounded))
+                                                .foregroundColor(.white.opacity(0.8))
+                                        }
                                     }
+                                    .tint(.orange)
                                 }
-                                .tint(.orange)
                             }
                         }
                         .padding(.horizontal)
@@ -296,7 +310,8 @@ struct HomeView: View {
                     roundLength: selectedRoundLength,
                     allowedNotes: selectedNotes.count == NoteName.allCases.count ? nil : selectedNotes,
                     metronomeEnabled: metronomeEnabled,
-                    metronomeSpeed: selectedMetronomeSpeed
+                    metronomeSpeed: selectedMetronomeSpeed,
+                    hapticEnabled: hapticEnabled
                 )
             }
             .fullScreenCover(isPresented: $showStats) {

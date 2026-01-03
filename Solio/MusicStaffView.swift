@@ -130,10 +130,11 @@ struct NoteView: View {
     let answerResult: AnswerResult
     let lineSpacing: CGFloat
     
+    @State private var shakeOffset: CGFloat = 0
+    @State private var jumpOffset: CGFloat = 0
+    @State private var wasCurrentNote: Bool = false
+    
     private var noteColor: Color {
-        if showingFeedback {
-            return answerResult == .correct ? .green : .red
-        }
         if isPastNote {
             return .green.opacity(0.6)
         }
@@ -159,18 +160,56 @@ struct NoteView: View {
                 .fill(noteColor)
                 .frame(width: 3, height: lineSpacing * 3)
                 .offset(x: lineSpacing * 0.65, y: -lineSpacing * 1.5)
-            
-            // Feedback indicator
-            if showingFeedback {
-                Image(systemName: answerResult == .correct ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(answerResult == .correct ? .green : .red)
-                    .offset(y: -lineSpacing * 2.5)
-                    .transition(.scale.combined(with: .opacity))
+        }
+        .offset(x: shakeOffset, y: jumpOffset)
+        .animation(.easeInOut(duration: 0.2), value: noteColor)
+        .onAppear {
+            wasCurrentNote = isCurrentNote
+        }
+        .onChange(of: isCurrentNote) { oldValue, newValue in
+            wasCurrentNote = oldValue
+        }
+        .onChange(of: isPastNote) { oldValue, newValue in
+            // When this note transitions from current to past = correct answer
+            if newValue && !oldValue && wasCurrentNote {
+                triggerSuccessAnimation()
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: showingFeedback)
-        .animation(.easeInOut(duration: 0.2), value: isPastNote)
+        .onChange(of: answerResult) { _, newValue in
+            // Shake on incorrect only if this is the current note
+            if newValue == .incorrect && isCurrentNote {
+                triggerShake()
+            }
+        }
+    }
+    
+    private func triggerShake() {
+        // Just shake - no color change
+        let shakeSequence: [(CGFloat, Double)] = [
+            (8, 0.0), (-8, 0.05), (6, 0.1), (-6, 0.15), (4, 0.2), (-4, 0.25), (0, 0.3)
+        ]
+        
+        for (offset, delay) in shakeSequence {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.linear(duration: 0.05)) {
+                    shakeOffset = offset
+                }
+            }
+        }
+    }
+    
+    private func triggerSuccessAnimation() {
+        // Jump up
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+            jumpOffset = -12
+        }
+        
+        // Come back down
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                jumpOffset = 0
+            }
+        }
     }
 }
 

@@ -7,6 +7,9 @@
 
 import SwiftUI
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 class GameViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -33,6 +36,7 @@ class GameViewModel: ObservableObject {
     var allowedNotes: Set<NoteName>?
     var metronomeEnabled: Bool
     var metronomeSpeed: MetronomeSpeed
+    var hapticEnabled: Bool
     
     // MARK: - Timers
     private var metronomeTimer: Timer?
@@ -54,7 +58,7 @@ class GameViewModel: ObservableObject {
     }
     
     // MARK: - Initialization
-    init(gameMode: GameMode = .practice, difficulty: Difficulty = .easy, clefSetting: ClefType = .treble, roundLength: RoundLength = .short, allowedNotes: Set<NoteName>? = nil, metronomeEnabled: Bool = false, metronomeSpeed: MetronomeSpeed = .moderate) {
+    init(gameMode: GameMode = .practice, difficulty: Difficulty = .easy, clefSetting: ClefType = .treble, roundLength: RoundLength = .short, allowedNotes: Set<NoteName>? = nil, metronomeEnabled: Bool = false, metronomeSpeed: MetronomeSpeed = .moderate, hapticEnabled: Bool = true) {
         self.gameMode = gameMode
         self.difficulty = difficulty
         self.clefSetting = clefSetting
@@ -62,6 +66,7 @@ class GameViewModel: ObservableObject {
         self.allowedNotes = allowedNotes
         self.metronomeEnabled = metronomeEnabled
         self.metronomeSpeed = metronomeSpeed
+        self.hapticEnabled = hapticEnabled
         self.currentClef = resolveClef()
         
         setupForGameMode()
@@ -126,12 +131,27 @@ class GameViewModel: ObservableObject {
             case .streak:
                 handleStreakCorrect()
             }
+            
+            // Reset result state after brief moment (for visual feedback only, doesn't block input)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                if self.lastAnswerResult == .correct {
+                    self.lastAnswerResult = .pending
+                }
+            }
         } else {
             lastAnswerResult = .incorrect
             
+            // Haptic feedback for wrong answer
+            triggerErrorHaptic()
+            
             switch gameMode {
             case .practice, .timedChallenge:
-                showFeedback {}
+                // Brief visual feedback only, doesn't block input
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    if self.lastAnswerResult == .incorrect {
+                        self.lastAnswerResult = .pending
+                    }
+                }
             case .streak:
                 handleStreakIncorrect()
             }
@@ -140,13 +160,9 @@ class GameViewModel: ObservableObject {
     
     // MARK: - Practice Mode
     private func handlePracticeCorrect() {
-        showFeedback {
-            self.currentNoteIndex += 1
-            if self.isRoundComplete {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self.generateNewRound()
-                }
-            }
+        currentNoteIndex += 1
+        if isRoundComplete {
+            generateNewRound()
         }
     }
     
@@ -167,9 +183,7 @@ class GameViewModel: ObservableObject {
     }
     
     private func handleTimedChallengeCorrect() {
-        showFeedback {
-            self.generateNewRound()
-        }
+        generateNewRound()
     }
     
     private func endTimedChallenge() {
@@ -186,13 +200,9 @@ class GameViewModel: ObservableObject {
             bestStreak = currentStreak
         }
         
-        showFeedback {
-            self.currentNoteIndex += 1
-            if self.isRoundComplete {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    self.generateNewRound()
-                }
-            }
+        currentNoteIndex += 1
+        if isRoundComplete {
+            generateNewRound()
         }
     }
     
@@ -206,15 +216,6 @@ class GameViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Feedback
-    private func showFeedback(completion: @escaping () -> Void) {
-        showingFeedback = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            self.showingFeedback = false
-            self.lastAnswerResult = .pending
-            completion()
-        }
-    }
     
     // MARK: - Reset
     func resetGame() {
@@ -268,5 +269,22 @@ class GameViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.metronomeBeat = false
         }
+    }
+    
+    // MARK: - Haptics
+    private func triggerErrorHaptic() {
+        guard hapticEnabled else { return }
+        #if canImport(UIKit)
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        #endif
+    }
+    
+    func triggerSuccessHaptic() {
+        guard hapticEnabled else { return }
+        #if canImport(UIKit)
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+        #endif
     }
 }
