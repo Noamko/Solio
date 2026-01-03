@@ -1,6 +1,6 @@
 //
 //  GameView.swift
-//  DoremiFasolasi
+//  Solio
 //
 //  Created by noamk on 02/01/2026.
 //
@@ -101,6 +101,7 @@ struct GameView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .preferredColorScheme(.light) // Force light mode for sheet music aesthetic
         .onAppear {
             StatsManager.shared.startSession()
             viewModel.startMetronomeIfNeeded()

@@ -1,6 +1,6 @@
 //
 //  PianoKeysView.swift
-//  DoremiFasolasi
+//  Solio
 //
 //  Created by noamk on 02/01/2026.
 //

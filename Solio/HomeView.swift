@@ -1,6 +1,6 @@
 //
 //  HomeView.swift
-//  DoremiFasolasi
+//  Solio
 //
 //  Created by noamk on 02/01/2026.
 //
@@ -82,7 +82,7 @@ struct HomeView: View {
                                 Text("🎼")
                                     .font(.system(size: 50))
                                 
-                                Text("NoteFlow")
+                                Text("Solio")
                                     .font(.system(size: 38, weight: .bold, design: .rounded))
                                     .foregroundStyle(
                                         LinearGradient(
