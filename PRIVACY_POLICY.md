@@ -60,7 +60,7 @@ If we make changes to this privacy policy, we will update the "Last Updated" dat
 
 If you have any questions about this privacy policy, please contact us at:
 
-**Email:** [your-email@example.com]
+**Email:** [noamko25@gmail.com]
 
 ---
 
